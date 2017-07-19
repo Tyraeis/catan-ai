@@ -8,7 +8,6 @@ extern crate num_cpus;
 extern crate lazy_static;
 
 use std::rc::Rc;
-use std::cell::RefCell;
 
 use gtk::prelude::*;
 use gtk::{ Window, DrawingArea };
@@ -29,7 +28,13 @@ fn main() {
     builder.add_hex(HexCoord::new(-1, 1), HexType::Water);
     builder.add_hex(HexCoord::new(0, 1), HexType::Desert);
 
-    let catan = Catan::new(builder);
+    let p1 = builder.add_player([1.0, 0.0, 0.0]);
+    let p2 = builder.add_player([0.0, 1.0, 0.0]);
+    let p3 = builder.add_player([0.0, 0.0, 1.0]);
+
+    builder.set_player_order(vec![p1, p2, p3]);
+
+    let mut catan = Catan::new(builder);
 
     if gtk::init().is_err() {
     	println!("Failed to initialize GTK.");

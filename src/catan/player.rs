@@ -5,7 +5,8 @@ use std::collections::HashSet;
 use catan::*;
 
 pub struct PlayerStatic {
-    color: [f64; 3],
+    pub color: [f64; 3],
+	pub next_player: PlayerID,
 }
 
 #[derive(Clone)]
@@ -33,6 +34,14 @@ impl Player {
 
 	pub fn get_resource(&self, resource: Resource) -> u8 {
 		*self.cards.get(&resource).unwrap_or(&0)
+	}
+
+	pub fn consume_resource(&mut self, resource: Resource, n: u8) {
+		*self.cards.get_mut(&resource).unwrap() -= n;
+	}
+
+	pub fn give_resource(&mut self, resource: Resource, n: u8) {
+		*self.cards.entry(resource).or_insert(0) += n;
 	}
 
 	pub fn get_buildable_spaces(&self, catan: &Catan) -> (HashSet<EdgeID>, HashSet<VertexID>) {

@@ -1,7 +1,11 @@
 use std::sync::Arc;
+use std::collections::HashMap;
+use std::cell::RefCell;
+
 use cairo::Context;
-use catan::{ EdgeID, VertexID, Resource, Catan };
-use catan::hex_coord::*;
+
+use catan::*;
+use catan::player::Player;
 
 #[derive(Clone, Copy)]
 pub enum HexType {
@@ -20,8 +24,8 @@ pub struct HexStatic {
 
 #[derive(Clone)]
 pub struct Hex {
-    static_data: Arc<HexStatic>,
-    roll: u8,
+    pub static_data: Arc<HexStatic>,
+    pub roll: u8,
 }
 
 impl Hex {
@@ -58,6 +62,11 @@ impl Hex {
 
         ctx.set_source_rgb(col[0], col[1], col[2]);
         ctx.fill();
+
+        /*ctx.move_to(0.0, 0.0);
+        ctx.set_source_rgb(0.0, 0.0, 0.0);
+        ctx.show_text(&format!("{:?}", pos));
+        ctx.fill();*/
 
         ctx.restore();
     }

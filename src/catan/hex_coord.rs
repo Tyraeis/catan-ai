@@ -7,11 +7,11 @@ pub struct HexCoord {
 }
 
 pub static HEX_DIRECTIONS: [HexCoord; 6] = [
-    HexCoord { q:  1, r: 0 }, HexCoord { q:  1, r: -1 }, HexCoord { q: 0, r: -1 },
-    HexCoord { q: -1, r: 0 }, HexCoord { q: -1, r:  1 }, HexCoord { q: 0, r:  1 },
+    HexCoord { q:  1, r: 0 }, HexCoord { q:  0, r:  1 }, HexCoord { q: -1, r:  1 },
+    HexCoord { q: -1, r: 0 }, HexCoord { q:  0, r: -1 }, HexCoord { q:  1, r: -1 },
 ];
 const SQRT_3: f64 = 1.732050807568877;
-pub const HEX_SCALE: f64 = 48.0;
+pub const HEX_SCALE: f64 = 64.0;
 pub static HEX_POINTS: [(f64, f64); 6] = [
     (HEX_SCALE *  1.0, HEX_SCALE * 0.0), (HEX_SCALE *  0.5, HEX_SCALE *  SQRT_3 / 2.0), (HEX_SCALE * -0.5, HEX_SCALE *  SQRT_3 / 2.0),
     (HEX_SCALE * -1.0, HEX_SCALE * 0.0), (HEX_SCALE * -0.5, HEX_SCALE * -SQRT_3 / 2.0), (HEX_SCALE *  0.5, HEX_SCALE * -SQRT_3 / 2.0) 

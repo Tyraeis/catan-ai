@@ -7,12 +7,15 @@ use catan::*;
 #[derive(Clone, Copy)]
 pub enum Structure {
     Settlement, City, Metropolis,
-    KnightT1, KnightT2, KnightT3,
+    KnightT1(bool), KnightT2(bool), KnightT3(bool),
 }
 
 pub struct VertexStatic {
 	pub hexes: [Option<HexCoord>; 3],
 	pub edges: [Option<EdgeID>; 3],
+
+    pub hex_position: HexCoord,
+    pub hex_side: usize,
 }
 
 #[derive(Clone)]
@@ -30,7 +33,17 @@ impl Vertex {
         }
     }
 
-    pub fn draw(ctx: &Context, pos: &HexCoord, side: usize) {
+    pub fn draw(&self, ctx: &Context, id: VertexID) {
+        let pos = self.static_data.hex_position;
+        let side = self.static_data.hex_side;
 
+        let (hex_x, hex_y) = pos.to_point();
+        let dx = HEX_POINTS[side].0;
+        let dy = HEX_POINTS[side].1;
+
+        /*ctx.move_to(hex_x + dx, hex_y + dy);
+        ctx.set_source_rgb(0.0, 0.0, 0.0);
+        ctx.show_text(&format!("{}", id));
+        ctx.fill();*/
     }
 }
