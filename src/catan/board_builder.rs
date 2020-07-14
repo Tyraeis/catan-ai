@@ -14,6 +14,8 @@ pub struct BoardBuilder {
 	last_edge_id: EdgeID,
 	last_vertex_id: VertexID,
 	last_player_id: PlayerID,
+
+	pub first_player: PlayerID,
 }
 
 fn add_edge_to_vertex(edge: EdgeID, vertex: &mut VertexStatic) {
@@ -41,6 +43,8 @@ impl BoardBuilder {
 			last_edge_id: 0,
 			last_vertex_id: 0,
 			last_player_id: 0,
+
+			first_player: 0,
 		}
 	}
 
@@ -54,7 +58,6 @@ impl BoardBuilder {
 		} else {
 			self.last_edge_id += 1;
 
-			println!("Edge {}: pos: {:?}; side: {}", self.last_edge_id, pos, n);
 			self.edges.insert(self.last_edge_id, EdgeStatic {
 				hexes: [Some(pos), None],
 				vertices: [vertices[n], vertices[(n + 1) % 6]],
@@ -104,7 +107,7 @@ impl BoardBuilder {
 		}
 	}
 
-	pub fn add_hex(&mut self, pos: HexCoord, typ: HexType) {
+	pub fn add_hex(&mut self, pos: HexCoord, typ: HexType, roll: u8) {
 		let vertices = [
 			self.get_vertex(pos, 0), self.get_vertex(pos, 1), self.get_vertex(pos, 2), 
 			self.get_vertex(pos, 3), self.get_vertex(pos, 4), self.get_vertex(pos, 5)
@@ -117,6 +120,7 @@ impl BoardBuilder {
 
 		let hex = HexStatic {
 			typ,
+			roll,
 
 			edges,
 			vertices,
@@ -127,7 +131,8 @@ impl BoardBuilder {
 	pub fn add_player(&mut self, color: [f64; 3]) -> PlayerID {
 		let player = PlayerStatic {
 			color,
-			next_player: 0
+			next_player: 0,
+			prev_player: 0,
 		};
 		self.last_player_id += 1;
 		self.players.insert(self.last_player_id, player);
@@ -135,11 +140,20 @@ impl BoardBuilder {
 	}
 
 	pub fn set_player_order(&mut self, order: Vec<PlayerID>) {
+		let mut order0 = order.clone();
+		let last = order0.pop().unwrap();
+		order0.insert(0, last);
+
 		let mut order2 = order.clone();
 		let first = order2.remove(0);
 		order2.push(first);
-		for (id1, id2) in order.iter().zip(order2) {
-			self.players.get_mut(id1).unwrap().next_player = id2;
+
+		for (id1, (beforeid, afterid)) in order.iter().zip(order0.iter().zip(order2)) {
+			let pl = self.players.get_mut(id1).unwrap();
+			pl.prev_player = *beforeid;
+			pl.next_player = afterid;
 		}
+
+		self.first_player = order[0];
 	}
 }

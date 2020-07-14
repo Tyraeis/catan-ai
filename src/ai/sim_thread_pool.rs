@@ -6,7 +6,7 @@ use std::time::{ Instant, Duration };
 use rand::{ thread_rng, Rng };
 use num_cpus;
 
-use super::Game;
+use super::{ Game, MoveList };
 
 pub(in super) struct SimThreadPool<G: Game> {
     senders: Vec<Sender<(G, u64)>>,
@@ -36,13 +36,26 @@ impl<G> SimThreadPool<G> where G: Game + 'static {
                             let mut g = game.clone();
 
                             while g.get_winner().is_none() {
-                                let moves = { &g.available_moves() };
-                                if let Some(mv) = rand.choose(moves) {
-                                    g.make_move_mut(mv);
-                                } else {
-                                    // no possible moves
-                                    break;
+                                let moves = { g.available_moves() };
+                                match moves {
+                                    MoveList::Choice(mvs) => {
+                                        if let Some(mv) = rand.choose(&mvs) {
+                                            g.make_move(mv);
+                                        } else {
+                                            // no possible moves
+                                            break;
+                                        }
+                                    }
+                                    MoveList::Random(mvs) => {
+                                        if let Some(&(ref mv, _)) = rand.choose(&mvs) {
+                                            g.make_move(mv);
+                                        } else {
+                                            // no possible moves
+                                            break;
+                                        }
+                                    }
                                 }
+                                
                             }
 
                             if let Some(winner) = g.get_winner() {

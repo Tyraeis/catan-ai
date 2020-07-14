@@ -1,33 +1,55 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::hash::*;
+
+use cairo::Context;
 
 use catan::*;
 
 pub struct PlayerStatic {
     pub color: [f64; 3],
 	pub next_player: PlayerID,
+	pub prev_player: PlayerID,
 }
 
 #[derive(Clone)]
 pub struct Player {
-    static_data: Arc<PlayerStatic>,
+    pub static_data: Arc<PlayerStatic>,
 
     pub victory_points: u8,
-    pub cities: HashSet<VertexID>,
-    pub knights: HashSet<VertexID>,
+    pub settlements: HashSet<VertexID>,
     pub roads: HashSet<EdgeID>,
     pub ports: HashSet<Resource>,
+	pub has_3to1_port: bool,
+	pub soldiers: u8,
 
     pub cards: HashMap<Resource, u8>,
     pub dev_cards: Vec<DevCard>,
-
-    pub yellow_prog: u8,
-    pub green_prog: u8,
-    pub blue_prog: u8,
 }
 
+fn print(ctx: &Context, color: [f64; 3], text: &str) {
+	ctx.set_source_rgb(color[0], color[1], color[2]);
+	ctx.show_text(text);
+}
+  
 impl Player {
+	pub fn new(static_data: PlayerStatic) -> Self {
+		Player {
+			static_data: Arc::new(static_data),
+
+			victory_points: 3, // includes starting city and settlement
+			settlements: HashSet::new(),
+			roads: HashSet::new(),
+			ports: HashSet::new(),
+			has_3to1_port: false,
+			soldiers: 0,
+
+			cards: HashMap::new(),
+			dev_cards: Vec::new(),
+		}
+	}
+
 	pub fn get_color(&self) -> [f64; 3] {
 		self.static_data.color
 	}
@@ -41,7 +63,37 @@ impl Player {
 	}
 
 	pub fn give_resource(&mut self, resource: Resource, n: u8) {
-		*self.cards.entry(resource).or_insert(0) += n;
+		let mut resource = self.cards.entry(resource).or_insert(0);
+		if *resource < 0xFF - n {
+			*resource += n;
+		}
+	}
+
+	fn path(&self, catan: &Catan, first_edge: EdgeID, visited_edges: &mut HashSet<EdgeID>, path: &mut u8, max_path: &mut u8) {
+		visited_edges.insert(first_edge);
+
+		let edge = catan.edges.get(&first_edge).unwrap();
+		for vertex_id in edge.static_data.vertices.iter() {
+			let vertex = catan.vertices.get(&vertex_id).unwrap();
+			for edge_id in vertex.static_data.edges.iter().filter_map(|x| *x) {
+				if self.roads.contains(&edge_id) && !visited_edges.contains(&edge_id) {
+					*path += 1;
+					*max_path = (*max_path).max(*path);
+					self.path(catan, edge_id, visited_edges, path, max_path);
+					*path -= 1;
+				}
+			}
+		}
+
+		visited_edges.remove(&first_edge);
+	}
+
+	pub fn get_longest_road(&self, catan: &Catan, starting_road: EdgeID) -> u8 {
+		let mut visited_edges = HashSet::new();
+		let mut path = 0;
+		let mut max_path = 0;
+		self.path(catan, starting_road, &mut visited_edges, &mut path, &mut max_path);
+		max_path
 	}
 
 	pub fn get_buildable_spaces(&self, catan: &Catan) -> (HashSet<EdgeID>, HashSet<VertexID>) {
@@ -98,4 +150,17 @@ impl Player {
 
 		(buildable_edges, buildable_vertices)
 	}
+}
+
+impl Hash for Player {
+    fn hash<H>(&self, state: &mut H) where H: Hasher {
+        self.victory_points.hash(state);
+		for (resource, num) in self.cards.iter() {
+			resource.hash(state);
+			num.hash(state);
+		}
+		for card in self.dev_cards.iter() {
+			card.hash(state);
+		}
+    }
 }
